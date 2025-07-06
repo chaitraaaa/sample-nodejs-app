@@ -29,7 +29,8 @@ pipeline {
     stage('Build Docker Image') {
       steps {
         echo "Building Docker image..."
-        sh 'docker build -t $GCR_IMAGE:latest .'
+        sh 'docker build -t $GCR_IMAGE:latest sample-nodejs-app-main/application-codes'
+
       }
     }
 
