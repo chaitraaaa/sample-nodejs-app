@@ -1,47 +1,60 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        IMAGE_NAME = "yourdockerhubusername/k8s-hello-app:latest"
-        KUBE_CONFIG = credentials('kubeconfig-cred-id')
+  environment {
+    GCP_PROJECT = 'thermal-circle-462005-n6'
+    GCR_IMAGE = "gcr.io/${GCP_PROJECT}/sample-nodejs-app"
+    GOOGLE_APPLICATION_CREDENTIALS = "/var/lib/jenkins/gcp-key.json"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        echo "Cloning source code..."
+        git 'https://github.com/chaitraaaa/sample-nodejs-app.git'
+      }
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/youruser/k8s-hello-app.git'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $IMAGE_NAME .'
-            }
-        }
-
-        stage('Push Image') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds-id', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh '''
-                        echo $PASSWORD | docker login -u $USERNAME --password-stdin
-                        docker push $IMAGE_NAME
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                withKubeConfig([credentialsId: 'kubeconfig-cred-id']) {
-                    sh '''
-                        kubectl apply -f k8s/serviceaccount.yaml
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
-                        kubectl apply -f k8s/ingress.yaml
-                        kubectl apply -f k8s/netpol.yaml
-                    '''
-                }
-            }
-        }
+    stage('Auth to GCP') {
+      steps {
+        echo "Authenticating to GCP..."
+        sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+        sh 'gcloud config set project $GCP_PROJECT'
+        sh 'gcloud container clusters get-credentials my-cluster --region us-central1'
+      }
     }
+
+    stage('Build Docker Image') {
+      steps {
+        echo "Building Docker image..."
+        sh 'docker build -t $GCR_IMAGE:latest .'
+      }
+    }
+
+    stage('Push Docker Image') {
+      steps {
+        echo "Pushing Docker image to GCR..."
+        sh 'gcloud auth configure-docker'
+        sh 'docker push $GCR_IMAGE:latest'
+      }
+    }
+
+    stage('Deploy to GKE') {
+      steps {
+        echo "Deploying to Kubernetes..."
+        // 🟢 Please confirm values below!
+        sh 'kubectl set image deployment/YOUR_DEPLOYMENT_NAME YOUR_CONTAINER_NAME=$GCR_IMAGE:latest --namespace=default'
+        sh 'kubectl rollout status deployment/YOUR_DEPLOYMENT_NAME --namespace=default'
+      }
+    }
+  }
+
+  post {
+    success {
+      echo '✅ Deployment successful!'
+    }
+    failure {
+      echo '❌ Deployment failed!'
+    }
+  }
 }
