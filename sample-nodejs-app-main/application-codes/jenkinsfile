@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "yourdockerhubusername/k8s-hello-app:latest"
+        KUBE_CONFIG = credentials('kubeconfig-cred-id')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/youruser/k8s-hello-app.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME .'
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds-id', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh '''
+                        echo $PASSWORD | docker login -u $USERNAME --password-stdin
+                        docker push $IMAGE_NAME
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig-cred-id']) {
+                    sh '''
+                        kubectl apply -f k8s/serviceaccount.yaml
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
+                        kubectl apply -f k8s/ingress.yaml
+                        kubectl apply -f k8s/netpol.yaml
+                    '''
+                }
+            }
+        }
+    }
+}
