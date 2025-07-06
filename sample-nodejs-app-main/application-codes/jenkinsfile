@@ -42,15 +42,22 @@ pipeline {
       }
     }
 
-    stage('Deploy to GKE') {
+    /*stage('Deploy to GKE') {
       steps {
         echo "Deploying to Kubernetes..."
         // 🔥 Replace below with your actual deployment and container names
         sh 'kubectl set image deployment/hello-app hello-app=$GCR_IMAGE:latest --namespace=mynamespace'
         sh 'kubectl rollout status deployment/hello-app --namespace=mynamespace'
       }
-    }
+    }*/
+    stage('Deploy to GKE') {
+      steps {
+        echo "Deploying to Kubernetes..."
+        sh 'kubectl apply -f k8s/deployment.yaml'
+        sh 'kubectl rollout status deployment/hello-app --namespace=mynamespace'
   }
+}
+}
 
   post {
     success {
