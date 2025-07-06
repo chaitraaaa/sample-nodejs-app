@@ -18,7 +18,7 @@ spec:
       serviceAccountName: hello-sa
       containers:
       - name: hello-app
-        image: gcr.io/thermal-circle-462005-n6/sample-nodejs-app:latest
+        image: DUMMY_IMAGE
         ports:
         - containerPort: 8080
         resources:
