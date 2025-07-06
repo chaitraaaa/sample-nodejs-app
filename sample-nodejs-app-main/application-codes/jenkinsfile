@@ -51,13 +51,19 @@ pipeline {
       }
     }*/
     stage('Deploy to GKE') {
-      steps {
-        echo "Deploying to Kubernetes..."
-        sh 'kubectl apply -f sample-nodejs-app-main/your-k8s-manifests/serviceaccount.yaml'
-        sh 'kubectl apply -f sample-nodejs-app-main/your-k8s-manifests/deployment.yaml'
-        sh 'kubectl rollout status deployment/hello-app --namespace=mynamespace'
+    steps {
+    echo "Deploying to Kubernetes..."
+
+    // Replace placeholder with your built image tag
+    sh '''
+      sed "s|REPLACE_IMAGE|$GCR_IMAGE:latest|g" sample-nodejs-app-main/your-k8s-manifests/deployment.yaml | kubectl apply -f -
+    '''
+
+    // Wait for rollout
+    sh 'kubectl rollout status deployment/hello-app --namespace=mynamespace'
   }
 }
+
 }
 
   post {
