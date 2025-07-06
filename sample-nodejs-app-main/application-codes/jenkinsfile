@@ -7,13 +7,13 @@ pipeline {
     GOOGLE_APPLICATION_CREDENTIALS = "/var/lib/jenkins/gcp-key.json"
   }
 
-  stages {
+ // stages {
     stage('Checkout') {
       steps {
         echo "Cloning source code..."
         git 'https://github.com/chaitraaaa/sample-nodejs-app.git'
       }
-    }
+  //  }
 
     stage('Auth to GCP') {
       steps {
