@@ -7,13 +7,15 @@ pipeline {
     GOOGLE_APPLICATION_CREDENTIALS = "/var/lib/jenkins/gcp-key.json"
   }
 
- // stages {
+  stages {
+    /*
     stage('Checkout') {
       steps {
         echo "Cloning source code..."
-        git 'https://github.com/chaitraaaa/sample-nodejs-app.git'
+        git branch: 'main', url: 'https://github.com/chaitraaaa/sample-nodejs-app.git'
       }
-  //  }
+    }
+    */
 
     stage('Auth to GCP') {
       steps {
@@ -42,7 +44,7 @@ pipeline {
     stage('Deploy to GKE') {
       steps {
         echo "Deploying to Kubernetes..."
-        // 🟢 Please confirm values below!
+        // 🔥 Replace below with your actual deployment and container names
         sh 'kubectl set image deployment/YOUR_DEPLOYMENT_NAME YOUR_CONTAINER_NAME=$GCR_IMAGE:latest --namespace=default'
         sh 'kubectl rollout status deployment/YOUR_DEPLOYMENT_NAME --namespace=default'
       }
